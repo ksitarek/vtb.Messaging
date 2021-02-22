@@ -1,8 +1,7 @@
-﻿using RabbitMQ.Client;
+﻿using System;
 using RabbitMQ.Client.Events;
-using System;
 
-namespace vtb.Messaging.Configuration
+namespace vtb.Messaging.Declarations
 {
     public record ConsumeDeclaration : BaseConsumeDeclaration
     {

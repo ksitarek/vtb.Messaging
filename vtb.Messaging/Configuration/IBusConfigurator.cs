@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
+using vtb.Messaging.Declarations;
 
 namespace vtb.Messaging.Configuration
 {

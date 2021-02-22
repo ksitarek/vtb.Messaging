@@ -1,11 +1,12 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using Microsoft.Extensions.DependencyInjection;
+using RabbitMQ.Client.Events;
 using vtb.Messaging.Consumers;
+using vtb.Messaging.Declarations;
+using vtb.Messaging.Providers;
 
 namespace vtb.Messaging.Configuration
 {
@@ -19,26 +20,31 @@ namespace vtb.Messaging.Configuration
         public ReadOnlyCollection<QueueDeclaration> QueueDeclarations => new ReadOnlyCollection<QueueDeclaration>(_queueDeclarations);
         public ReadOnlyCollection<ConsumeDeclaration> ConsumeDeclarations => new ReadOnlyCollection<ConsumeDeclaration>(_consumeDeclarations);
 
-
-        protected static readonly BaseQueueDeclaration _defaultQueueDeclaration = new BaseQueueDeclaration
+        protected virtual BaseQueueDeclaration _defaultQueueDeclaration
         {
-            AutoDelete = false,
-            Durable = true,
-            Exclusive = true,
-            Arguments = new Dictionary<string, object>()
-        };
+            get => new BaseQueueDeclaration
+            {
+                AutoDelete = false,
+                Durable = true,
+                Exclusive = true,
+                Arguments = new Dictionary<string, object>()
+            };
+        }
 
-        protected static readonly BaseExchangeDeclaration _defaultExchangeDeclaration = new BaseExchangeDeclaration
+        protected virtual BaseExchangeDeclaration _defaultExchangeDeclaration
         {
-            Type = "",
-            AutoDelete = false,
-            Durable = true,
-            Arguments = new Dictionary<string, object>()
-        };
+            get => new BaseExchangeDeclaration
+            {
+                Type = "",
+                AutoDelete = false,
+                Durable = true,
+                Arguments = new Dictionary<string, object>()
+            };
+        }
 
         protected static readonly BaseConsumeDeclaration _defaultConsumeDeclaration = new BaseConsumeDeclaration
         {
-            AutoAck = false // todo: remember to take care of!
+            AutoAck = false
         };
 
         protected IReadOnlyDictionary<string, object> MergeArguments(IReadOnlyDictionary<string, object> defaultArguments, IReadOnlyDictionary<string, object> customArguments)
@@ -69,7 +75,7 @@ namespace vtb.Messaging.Configuration
                 Durable = customQueueDeclaration?.Durable ?? _defaultQueueDeclaration.Durable,
                 Exclusive = customQueueDeclaration?.Exclusive ?? _defaultQueueDeclaration.Exclusive,
                 AutoDelete = customQueueDeclaration?.AutoDelete ?? _defaultQueueDeclaration.AutoDelete,
-                Arguments = MergeArguments(_defaultQueueDeclaration.Arguments, customQueueDeclaration.Arguments)
+                Arguments = MergeArguments(_defaultQueueDeclaration.Arguments, customQueueDeclaration?.Arguments)
             };
 
             _queueDeclarations.Add(queueDeclaration);
@@ -88,7 +94,7 @@ namespace vtb.Messaging.Configuration
             _exchangeDeclarations.Add(exchangeDeclaration);
         }
 
-        protected void SetUpSubscription<T>(BaseConsumeDeclaration customConsumeDeclaration = null) where T : class
+        protected void DeclareConsumer<T>(BaseConsumeDeclaration customConsumeDeclaration = null) where T : class
         {
             var consumeDeclaration = new ConsumeDeclaration
             {
@@ -120,12 +126,12 @@ namespace vtb.Messaging.Configuration
 
         public IBusConfigurator Handle<T>(
             BaseExchangeDeclaration customExchangeDeclaration = null,
-            BaseQueueDeclaration customQueueDeclaration = null, 
+            BaseQueueDeclaration customQueueDeclaration = null,
             BaseConsumeDeclaration baseConsumeDeclaration = null) where T : class
         {
             RegisterExchangeDeclaration<T>(customExchangeDeclaration);
             RegisterQueueDeclaration<T>(customQueueDeclaration);
-            SetUpSubscription<T>(baseConsumeDeclaration);
+            DeclareConsumer<T>(baseConsumeDeclaration);
 
             return this;
         }

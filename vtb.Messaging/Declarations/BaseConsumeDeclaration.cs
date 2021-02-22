@@ -1,4 +1,4 @@
-﻿namespace vtb.Messaging.Configuration
+﻿namespace vtb.Messaging.Declarations
 {
     public record BaseConsumeDeclaration
     {

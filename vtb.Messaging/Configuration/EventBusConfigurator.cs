@@ -1,18 +1,20 @@
-﻿using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using RabbitMQ.Client;
+using vtb.Messaging.Declarations;
 
 namespace vtb.Messaging.Configuration
 {
     public class EventBusConfigurator : AbstractBusConfigurator, IBusConfigurator
     {
-        protected static new readonly BaseExchangeDeclaration _defaultExchangeDeclaration = new BaseExchangeDeclaration
+        protected override BaseExchangeDeclaration _defaultExchangeDeclaration
         {
-            Type = ExchangeType.Fanout,
-            AutoDelete = false,
-            Durable = true,
-            Arguments = new Dictionary<string, object>()
-        };
+            get => new BaseExchangeDeclaration
+            {
+                Type = ExchangeType.Fanout,
+                AutoDelete = false,
+                Durable = true,
+                Arguments = new Dictionary<string, object>()
+            };
+        }
     }
 }

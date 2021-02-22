@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace vtb.Messaging.Configuration
+﻿namespace vtb.Messaging.Declarations
 {
     public record QueueDeclaration : BaseQueueDeclaration
     {

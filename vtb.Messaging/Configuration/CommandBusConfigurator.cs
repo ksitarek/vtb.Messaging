@@ -1,20 +1,20 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Collections.Generic;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
-using System;
-using System.Collections.Generic;
-using vtb.Messaging.Consumers;
+using vtb.Messaging.Declarations;
 
 namespace vtb.Messaging.Configuration
 {
     public class CommandBusConfigurator : AbstractBusConfigurator, IBusConfigurator
     {
-        protected static new readonly BaseExchangeDeclaration _defaultExchangeDeclaration = new BaseExchangeDeclaration
+        protected override BaseExchangeDeclaration _defaultExchangeDeclaration
         {
-            Type = ExchangeType.Topic,
-            AutoDelete = false,
-            Durable = true,
-            Arguments = new Dictionary<string, object>()
-        };
+            get => new BaseExchangeDeclaration
+            {
+                Type = ExchangeType.Topic,
+                AutoDelete = false,
+                Durable = true,
+                Arguments = new Dictionary<string, object>()
+            };
+        }
     }
 }

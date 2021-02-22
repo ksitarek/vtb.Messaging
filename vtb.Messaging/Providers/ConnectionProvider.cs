@@ -1,15 +1,21 @@
 ﻿using System;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace vtb.Messaging.Configuration
+namespace vtb.Messaging.Providers
 {
     public class ConnectionProvider : IConnectionProvider
     {
         private readonly ILogger<ConnectionProvider> _logger;
         private readonly IConnectionFactory _connectionFactory;
         private IAutorecoveringConnection _connection;
+
+        private readonly RetryPolicy ConnectionRetryPolicy = Policy
+            .Handle<Exception>()
+            .WaitAndRetryForever(x => TimeSpan.FromMilliseconds(x * 100));
 
         public bool IsConnected
         {
@@ -27,7 +33,10 @@ namespace vtb.Messaging.Configuration
         public IModel CreateModel()
         {
             if (_connection == null)
-                _connection = Connect();
+                ConnectionRetryPolicy.Execute(() =>
+                {
+                    _connection = Connect();
+                });
 
             if (!_connection.IsOpen)
                 throw new InvalidOperationException("To create channer there must be open connection to RabbitMQ.");
@@ -38,7 +47,7 @@ namespace vtb.Messaging.Configuration
         private IAutorecoveringConnection Connect()
         {
             var connection = _connectionFactory.CreateConnection() as IAutorecoveringConnection;
-            if(connection == null)
+            if (connection == null)
             {
                 throw new NotSupportedException("Non-recoverable connection is not supported");
             }
@@ -58,7 +67,7 @@ namespace vtb.Messaging.Configuration
             var connection = (IConnection)sender;
             _logger.LogInformation("Disconnected from: {cid} because of: {reason}",
                 GetConnectionId(connection),
-                e.ReplyText) ;
+                e.ReplyText);
         }
 
         private void OnConnectionBlocked(object sender, ConnectionBlockedEventArgs e)
