@@ -24,5 +24,14 @@ namespace vtb.Messaging.Tests.Integration.MessageConsumption
         {
             _factory?.Dispose();
         }
+
+        protected void WaitMany(int cnt)
+        {
+            while (cnt > 0)
+            {
+                BaseApplicationTestFixture.MainWaitHandle.WaitOne();
+                cnt--;
+            }
+        }
     }
 }
