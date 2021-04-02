@@ -19,7 +19,7 @@ namespace vtb.Messaging.Tests.Integration
                         ["RabbitMq:UserName"] = "guest",
                         ["RabbitMq:Password"] = "guest",
                         ["RabbitMq:HostName"] = "localhost",
-                        ["RabbitMq:Port"] = BaseApplicationTestFixture.RmqPort.ToString()
+                        ["RabbitMq:Port"] = ContainerHelper.RmqPort.ToString()
                     });
                 })
                 .ConfigureWebHostDefaults(x =>

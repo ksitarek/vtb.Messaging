@@ -1,10 +1,14 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
+using vtb.Messaging.Consumers;
 using vtb.Messaging.Declarations;
+using vtb.Messaging.Pipelines;
 using vtb.Messaging.Providers;
 
 namespace vtb.Messaging.Configuration
@@ -13,6 +17,8 @@ namespace vtb.Messaging.Configuration
     {
         private IServiceCollection _services;
         private IConfigurationSection _configuration;
+        private Assembly[] _assemblies;
+        private PipelineBuilder _consumePipeline;
         private readonly CommandBusConfigurator _commandBusConfigurator;
         private readonly EventBusConfigurator _eventBusConfigurator;
 
@@ -22,12 +28,20 @@ namespace vtb.Messaging.Configuration
             _eventBusConfigurator = new EventBusConfigurator();
         }
 
-        public static BusHostConfigurator WithConfiguration(IConfigurationSection configuration)
+        public static BusHostConfigurator WithConfiguration(IConfigurationSection configuration, Assembly[] assemblies)
         {
             var configurator = new BusHostConfigurator();
             configurator._configuration = configuration;
+            configurator._assemblies = assemblies;
 
             return configurator;
+        }
+
+        public BusHostConfigurator ConsumePipeline(PipelineBuilder consumePipeline)
+        {
+            _consumePipeline = consumePipeline;
+
+            return this;
         }
 
         public BusHostConfigurator HandleCommand<T>(
@@ -35,7 +49,7 @@ namespace vtb.Messaging.Configuration
             BaseQueueDeclaration customQueueDeclaration = null,
             BaseConsumeDeclaration baseConsumeDeclaration = null) where T : class
         {
-            _commandBusConfigurator.Handle<T>(customExchangeDeclaration, customQueueDeclaration, baseConsumeDeclaration);
+            _commandBusConfigurator.Handle<T>(_assemblies, typeof(IHandler<T>), customExchangeDeclaration, customQueueDeclaration, baseConsumeDeclaration);
             return this;
         }
 
@@ -44,7 +58,7 @@ namespace vtb.Messaging.Configuration
             BaseQueueDeclaration customQueueDeclaration = null,
             BaseConsumeDeclaration baseConsumeDeclaration = null) where T : class
         {
-            _eventBusConfigurator.Handle<T>(customExchangeDeclaration, customQueueDeclaration, baseConsumeDeclaration);
+            _eventBusConfigurator.Handle<T>(_assemblies, typeof(IHandler<T>), customExchangeDeclaration, customQueueDeclaration, baseConsumeDeclaration);
             return this;
         }
 
@@ -53,6 +67,14 @@ namespace vtb.Messaging.Configuration
             _services = services;
             _services.AddSingleton<BusInstallator>();
             _services.AddHostedService<BusHostedService>();
+            _services.AddSingleton<IMessageDispatcher, MessageDispatcher>(sp =>
+            {
+                var md = new MessageDispatcher(sp.GetRequiredService<IServiceProvider>(), _consumePipeline);
+                return md;
+            });
+
+            foreach (var filterType in _consumePipeline.FilterTypes)
+                _services.AddScoped(serviceType: filterType);
 
             ConfigureConnectionProvider();
 
@@ -103,6 +125,16 @@ namespace vtb.Messaging.Configuration
 
                 return factory;
             });
+
+            RegisterCommandHandlers();
+        }
+
+        private void RegisterCommandHandlers()
+        {
+            foreach (var consumerMap in _commandBusConfigurator.ConsumerMappings.Union(_eventBusConfigurator.ConsumerMappings))
+            {
+                _services.AddScoped(consumerMap.Key, consumerMap.Value);
+            }
         }
 
         private void RegisterMultiple<T>(IEnumerable<T> services, ServiceLifetime lifetime)

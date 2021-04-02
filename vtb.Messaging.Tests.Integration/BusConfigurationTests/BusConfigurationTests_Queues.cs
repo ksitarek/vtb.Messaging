@@ -5,7 +5,9 @@ using System.Linq.Expressions;
 using Microsoft.Extensions.DependencyInjection;
 using NUnit.Framework;
 using Shouldly;
+using vtb.Messaging.Consumers;
 using vtb.Messaging.Declarations;
+using vtb.Messaging.Tests.Integration.TestClasses.Consumers;
 using vtb.Messaging.Tests.Integration.TestClasses.Messages;
 
 namespace vtb.Messaging.Tests.Integration.BusConfigurationTests
@@ -36,6 +38,28 @@ namespace vtb.Messaging.Tests.Integration.BusConfigurationTests
                 && x.Exclusive == true
                 && x.AutoDelete == false
                 && !x.Arguments.Any();
+        }
+    }
+
+    public class BusConfigurationTests_Handlers : BaseBusConfigurationTests
+    {
+        [Test]
+        public void Will_Register_Message_Consumers()
+        {
+            var testCommandHandler1 = _factory.Services.GetService<IHandler<TestCommand1>>();
+            var testCommandHandler2 = _factory.Services.GetService<IHandler<TestCommand2>>();
+            var testEventHandler1 = _factory.Services.GetService<IHandler<TestEvent1>>();
+            var testEventHandler2 = _factory.Services.GetService<IHandler<TestEvent2>>();
+
+            testCommandHandler1.ShouldNotBeNull();
+            testCommandHandler2.ShouldNotBeNull();
+            testEventHandler1.ShouldNotBeNull();
+            testEventHandler2.ShouldNotBeNull();
+
+            testCommandHandler1.ShouldBeOfType<TestCommandHandler>();
+            testCommandHandler2.ShouldBeOfType<TestCommandHandler>();
+            testEventHandler1.ShouldBeOfType<TestEventHandler>();
+            testEventHandler2.ShouldBeOfType<TestEventHandler>();
         }
     }
 }

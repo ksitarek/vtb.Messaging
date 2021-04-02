@@ -22,7 +22,7 @@ namespace vtb.Messaging.Tests.Integration.BusConfigurationTests
             cf.UserName.ShouldBe("guest");
             cf.Password.ShouldBe("guest");
             cf.HostName.ShouldBe("localhost");
-            cf.Port.ShouldBe(BaseApplicationTestFixture.RmqPort);
+            cf.Port.ShouldBe(ContainerHelper.RmqPort);
         }
     }
 }

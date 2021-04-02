@@ -7,6 +7,8 @@ namespace vtb.Messaging.Pipelines
     public class PipelineBuilder
     {
         private readonly LinkedList<Type> _filterTypes;
+        public IEnumerable<Type> FilterTypes => _filterTypes.ToList();
+
         public static PipelineBuilder Create()
         {
             return new PipelineBuilder();
