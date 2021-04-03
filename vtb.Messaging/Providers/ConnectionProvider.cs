@@ -39,7 +39,7 @@ namespace vtb.Messaging.Providers
                 });
 
             if (!_connection.IsOpen)
-                throw new InvalidOperationException("To create channer there must be open connection to RabbitMQ.");
+                throw new InvalidOperationException("To create channel there must be open connection to RabbitMQ.");
 
             return _connection.CreateModel();
         }

@@ -33,4 +33,18 @@ namespace vtb.Messaging.Tests.Integration.TestClasses.Consumers
             return Task.CompletedTask;
         }
     }
+
+    public class TestRequestHandler :
+        IHandler<TestRequest1>
+    {
+        public Task Handle(IMessageContext<TestRequest1> messageContext)
+        {
+            var response = new TestResponse1()
+            {
+                ReceivedId = messageContext.Message.Id
+            };
+
+            // todo add IBus.Respond(messageId, response);
+        }
+    }
 }
